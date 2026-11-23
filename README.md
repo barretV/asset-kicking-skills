@@ -22,7 +22,7 @@ Prefer to look first? `python setup/detect.py --dry-run` prints what you have an
 | **blender-anim** | SkinTokens auto-rigging of bare meshes, clip authoring in Blender with posing helpers, retargeting clips onto a resculpted body, and a verify gate that measures loop seams, left/right symmetry and foot contact. GLB export. | rigging only |
 | **game-sfx** | Procedural retro SFX (no GPU), CC0 library workflow, optional Stable Audio 3 drafts, and an FFmpeg finishing pass (mono, trim, fades, loudness) with a manifest. | optional |
 
-See [examples/](examples/) for sample outputs.
+See [examples/](examples/) for sample outputs, including painted game UI made with art-forge-loop ([recipe](skills/art-forge-loop/UI.md)).
 
 ## Hardware
 

@@ -1,6 +1,6 @@
 ---
 name: art-forge-loop
-description: Graded art iteration loop - generate pixel art or 2D illustration with local MOSS/ComfyUI, judge every candidate against a score bar (default 9.5/10), refine the best with a specific note, and repeat until each target passes or runs out of rounds. Use when asked to make, upgrade, re-imagine or "iterate until it's good" on sprites, skins, enemies, items, props or world art, or to run the forge/grading loop (optionally under /ralph-loop).
+description: Graded art iteration loop - generate pixel art, 2D illustration or painted game UI parts with local MOSS/ComfyUI, judge every candidate against a score bar (default 9.5/10), refine the best with a specific note, and repeat until each target passes or runs out of rounds. Use when asked to make, upgrade, re-imagine or "iterate until it's good" on sprites, skins, enemies, items, props or world art, or to run the forge/grading loop (optionally under /ralph-loop).
 ---
 
 # Art forge loop
@@ -87,6 +87,9 @@ Create `work/forge/<job>/job.json`. All paths are relative to the project root.
 - If `rembg` is installed (`pip install "rembg[cpu]"`, which downloads the 176 MB isnet-anime model on first use), its AI character matte is combined with the colour cutout: a pixel stays only if both call it character. This catches shaded background pockets that colour rules miss. It runs on the CPU.
 - A pocket the model painted with its own outline (a cape or scarf) is a design fault, not background. Fix it in the note, for example "no cape".
 - The cutout also removes enclosed background pockets (between a tail and a body, under an arm) within `hole_tol` (32) of the background colour. Lower it if a character's own colour is close to the lavender background.
+
+## 1b-ui. Game UI art (frames, ribbons, medallions, icons)
+For menus and HUDs, read `UI.md` in this skill first: painted parts from rough code-made inits, one material language, no baked text, glow and states added in the engine, and a mechanical layout check. `examples/ui/` in the asset-kicking-skills repo shows the result.
 
 ## 1c. SVG export
 `python <skill>/scripts/forge_loop.py <job> svg` writes `<job>/svg/<target>.svg` for every pick.
