@@ -36,7 +36,7 @@
 | **Hi3D** weights | int8 (4.3 GB) | int8 | fp16 (7.7 GB) or int8 | fp16 |
 | Hi3D stages | 512, 1024 (9-11 min; 1536 tight, ~5 GB peak) | 512, 1024, 1536 | 512, 1024, 1536 | 512, 1024, 1536 |
 | **SkinTokens** | ComfyUI `--novram`, ~70 s / 120k verts | `--lowvram` | `--lowvram` (upstream wants 14 GB unoffloaded) | default |
-| **Stable Audio 3** | Small-SFX (untested; ~2-2.5 GB expected) | Small-SFX | Small-SFX, Medium possible (~6.5 GB) | Medium or Small-SFX |
+| **Stable Audio 3** | Small-SFX (**tested**: ~1.9 GB peak, 1.5-3 s per clip) | Small-SFX | Small-SFX, Medium possible (~6.5 GB) | Medium or Small-SFX |
 | **StableGen** texturing | unproven; SDXL fp8 UNet if tried | SDXL fp8 (its docs: ~8 GB) | SDXL fp16 | SDXL fp16 |
 
 Moving up a tier changes **resolution, batch size, precision and flags**; the model files stay the same unless the table names an optional higher-precision file (`hi3d-fp16` bundle, MOSS bf16).

@@ -11,6 +11,8 @@ Small outputs from the pipelines on the 6 GB reference machine (RTX 3060 Laptop)
 | `ui/hive_perk_comb_menu.webp`, `ui/reward_card_pick.webp` | art-forge-loop (`UI.md`) | Menus from a game in development. The painted frames, ribbons, medallions and icons are forge-loop pieces (illustration mode, from a rough code-made init, `first_denoise` 0.75, bar 9.5); every word is live text; glow and the dimmed states are engine filters. |
 | `ui/parts/card_frame_blank.png`, `ui/parts/ribbon_blank.png` | art-forge-loop | Two of the blank kit parts those screens are built from, as exported (trimmed, 256 colours, ~20 KB each). The same card frame carries every reward card. |
 | `sound/*.ogg` | game-sfx | `sfx_synth.py coin laser explosion powerup --seed 2026`, then `finish_sfx.py --format ogg`. No GPU, no samples. |
+| `sound/ai/*.ogg` | game-sfx | Stable Audio 3 Small-SFX through `sa3_generate.py` (8 steps, CFG 1, lcm/simple), 3 seeds per prompt on the 6 GB machine (1.5-3 s per take, ~1.9 GB VRAM peak), best take picked by spectrogram, then `finish_sfx.py --format ogg`. `sound/ai/manifest.json` has every prompt and seed. No edits. |
+| `../docs/showcase/sound_demo.mp4` | game-sfx | All 13 sounds with waveforms and prompts, 27 s, built with FFmpeg and Pillow. |
 
 Regenerate the sounds yourself:
 
@@ -19,4 +21,4 @@ python skills/game-sfx/bin/sfx_synth.py coin laser explosion powerup --seed 2026
 python skills/game-sfx/bin/finish_sfx.py work/raw work/ready --format ogg
 ```
 
-Licence: these example files are covered by the repo's MIT licence.
+Licence: these example files are covered by the repo's MIT licence, except `sound/ai/`: those are Stable Audio 3 outputs, made under the Stability AI Community License (Powered by Stability AI). Using them commercially follows that licence (free under USD 1M annual revenue, with registration).

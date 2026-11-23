@@ -71,3 +71,7 @@ Legend: ✅ commercial use OK · ⚠️ commercial use OK **with conditions** ·
 ## Vendored in this repo
 
 See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md): pixel-art craft rules (MIT, with-pebbly/aseprite-ai-artist) and the Hi3D source workflow `pa_wf01.json` (MIT, PixelArtistry).
+
+## Example files that are not MIT
+
+`examples/sound/ai/*.ogg` are Stable Audio 3 Small-SFX outputs, made under the Stability AI Community License. Powered by Stability AI. Their prompts and seeds are in `examples/sound/ai/manifest.json`. Everything else in `examples/` and `docs/showcase/` falls under the repo's MIT licence.

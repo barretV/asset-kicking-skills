@@ -88,15 +88,25 @@ On 6 GB: TRELLIS.2 ~3.5 min, Hi3D refine ~10 min, rigging ~70 s. Measuring, clea
 
 ## 🔊 Sound effects
 
-Procedural retro sounds with no GPU (coins, lasers, jumps, hits, explosions, power-ups), a CC0-library workflow for real recordings, optional AI drafts with Stable Audio 3, and one script that finishes everything: mono, trimmed, faded, loudness-matched, with a manifest of where each file came from.
+Two engines, one finishing pass. **Procedural** retro sounds with no GPU at all (coins, lasers, jumps, hits, explosions, power-ups). **AI sound design** with Stable Audio 3 Small-SFX for the things a synth can't fake: sword clangs, shattering crystal, monster roars, bee swarms, grinding stone doors, footsteps on gravel. Type what you want to hear; on a 6 GB laptop GPU each take is ready in **2 to 3 seconds** (under 2 GB of VRAM), so your agent makes several takes of every sound and keeps the best. Then one script makes everything game-ready: mono, trimmed, faded, loudness-matched, with a manifest of the prompt and seed behind each file.
 
-<p align="center"><img src="docs/showcase/sound.webp" alt="Waveforms of four generated sounds: coin, laser, explosion, power-up" width="100%"></p>
+<p align="center"><a href="docs/showcase/sound_demo.mp4"><img src="docs/showcase/sound_demo_thumb.webp" alt="Sound demo video: 4 procedural and 9 AI sound effects with waveforms and their prompts" width="100%"></a></p>
 
-Listen: [coin](examples/sound/coin_01.ogg) · [laser](examples/sound/laser_01.ogg) · [explosion](examples/sound/explosion_01.ogg) · [power-up](examples/sound/powerup_01.ogg)
+<!-- SOUND_DEMO_VIDEO: drag docs/showcase/sound_demo.mp4 into this README in GitHub's web editor to get an inline player, and put the user-attachments link here -->
+
+<p align="center"><img src="docs/showcase/sound.webp" alt="Waveforms: coin, laser, explosion and power-up from the synth; sword hit, crystal shatter, monster roar and stone door from Stable Audio 3" width="100%"></p>
+
+**Listen** (each opens a player on GitHub):
+- AI: [sword hit](examples/sound/ai/sword_hit.ogg) · [fireball](examples/sound/ai/fireball.ogg) · [spell charge](examples/sound/ai/spell_charge.ogg) · [crystal shatter](examples/sound/ai/crystal_shatter.ogg) · [monster roar](examples/sound/ai/monster_roar.ogg) · [bee swarm](examples/sound/ai/swarm_buzz.ogg) · [stone door](examples/sound/ai/stone_door.ogg) · [footsteps](examples/sound/ai/footsteps_gravel.ogg) · [explosion](examples/sound/ai/explosion.ogg)
+- Procedural: [coin](examples/sound/coin_01.ogg) · [laser](examples/sound/laser_01.ogg) · [explosion](examples/sound/explosion_01.ogg) · [power-up](examples/sound/powerup_01.ogg)
 
 **Ask your agent:**
-- *"Make 6 coin pickups and 4 UI blips, finish them as ogg."*
+- *"Use game-sfx with Stable Audio to make a heavy stone door grinding open, 4 takes, finish the best two as ogg."*
+- *"Make hit sounds for my three enemy types: a beetle shell crunch, a slime squelch, a metal golem clang."*
+- *"Make 6 coin pickups and 4 UI blips with the synth."* (bright UI tones are the synth's job)
 - *"Layer a recorded door slam with a short noise burst and level the whole folder."*
+
+AI sounds are Stable Audio 3 Small-SFX, **Powered by Stability AI**: free for commercial use under USD 1M annual revenue (see [Licences](#licences-in-plain-words)).
 
 ---
 
@@ -143,7 +153,7 @@ TIER: 6gb  -  6 GB VRAM (tested baseline, e.g. RTX 3060 Laptop)
 ## Licences, in plain words
 
 - **This repo:** MIT.
-- **Every default model allows commercial use.** A few have conditions: Hi3D asks for credit only if you build Hi3D itself into a product (shipping meshes is fine); Stable Audio is free under USD 1M revenue.
+- **Every default model allows commercial use.** A few have conditions: Hi3D asks for credit only if you build Hi3D itself into a product (shipping meshes is fine); Stable Audio is free under USD 1M revenue (register with Stability, credit "Powered by Stability AI").
 - **Left out on purpose:** non-commercial or region-locked models (Hunyuan3D, FLUX.1-dev, Qwen Image, several audio models).
 - No model weights are stored here; they download from the official source on your machine, after you approve them.
 
@@ -163,4 +173,4 @@ Agents: start at [AGENTS.md](AGENTS.md). Doing it by hand: the same file, step b
 
 ## Credits
 
-Standing on ComfyUI, MOSS-Image and the moss-pixelart LoRA, TRELLIS.2, Hi3D and the Aero-Ex ComfyUI nodes, SkinTokens, Blender, Aseprite and aseprite-mcp, the Pebbly pixel-art rules, and FFmpeg. Thank you.
+Standing on ComfyUI, MOSS-Image and the moss-pixelart LoRA, TRELLIS.2, Hi3D and the Aero-Ex ComfyUI nodes, SkinTokens, Stable Audio 3 (Powered by Stability AI), Blender, Aseprite and aseprite-mcp, the Pebbly pixel-art rules, and FFmpeg. Thank you.

@@ -32,7 +32,7 @@
       "trellis2": {"enabled": true, "weights": "int8 ConvRot", "shape": "512 structure, 1024 upsample", "minutes": 3.5},
       "hi3d": {"enabled": true, "weights": "int8", "stages": "512,1024", "max_stage": "1536 (tight, peaks near 5 GB)", "minutes": "9-11 for 512 to 1024"},
       "skintokens": {"enabled": true, "launch": "ComfyUI with --novram", "seconds": "about 70 s for a 120k-vertex mesh"},
-      "sfx_ai": {"enabled": true, "tested": false, "model": "Stable Audio 3 Small-SFX", "note": "Expected 2-2.5 GB peak (paper figures); not measured on this card yet."},
+      "sfx_ai": {"enabled": true, "tested": true, "model": "Stable Audio 3 Small-SFX", "launch": "the normal 6gb comfyui_args", "note": "Measured on the RTX 3060 Laptop: peak about 1.9 GB on the card (about 1.2 GB above the desktop), 1.5-3 s per 1.5-4 s clip with --cache-none reloading weights each take, about 6 s for the first take, 30 takes in 69 s. Generation is not the bottleneck; picking is."},
       "stablegen": {"enabled": false, "tested": false, "note": "Unproven on 6 GB. If you try it: SDXL with an fp8 UNet (ComfyUI --fp8_e4m3fn-unet) plus --lowvram, 1024 px views, one ControlNet at a time. StableGen itself asks for about 8 GB for SDXL."},
       "max_parallel_gpu_jobs": 1
     },

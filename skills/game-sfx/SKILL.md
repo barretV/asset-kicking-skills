@@ -40,7 +40,7 @@ Other free procedural tools whose authors say the output is yours: ChipTone (CC0
 - Ask the user before downloading anything; list the files and sources first.
 
 ## 3. Stable Audio 3 Small-SFX (optional, AI drafts)
-**Status: not yet tested on the 6 GB reference machine.** Paper figures put it at about 2-2.5 GB of VRAM, 8 steps, a second or two per clip once loaded. Verify on the first run and update `setup/tiers.json` with what you measure.
+**Tested on the 6 GB reference machine (RTX 3060 Laptop), normal 6 GB launch flags:** peak about 1.9 GB on the card (about 1.2 GB above the desktop), about 6 s for the first take, then 1.5-3 s per 1.5-4 s clip (30 takes in 69 s). Making takes is cheap; picking them is the work, so generate 3+ seeds per sound.
 
 **Licence:** Stability AI Community License. Free for commercial use only while you (and affiliates) stay under **USD 1M annual revenue**; commercial users must register with Stability; show "Powered by Stability AI" in your credits to be safe. The text encoder (T5Gemma) is under the Gemma Terms of Use. Keep prompts, seeds and a manifest for every shipped AI sound, so you can replace them if you ever cross the threshold.
 
@@ -49,7 +49,24 @@ Setup (the agent does this only after the user approves the download list from `
 2. `python setup/models.py fetch --bundles sfx-ai --yes` puts `stable_audio_3_small_sfx.safetensors` in `models/checkpoints` and `t5gemma_b_b_ul2.safetensors` in `models/text_encoders`. Needs ComfyUI v0.22 or newer; no custom node and no pip change.
 3. **Never** `pip install` Stability's own `stable-audio-3` package into the ComfyUI venv: it pins an older torch. Give it its own venv if you ever need it.
 
-Graph: start from ComfyUI's bundled blueprint "Audio Generation (Stable Audio 3 Medium)", swap the checkpoint to `stable_audio_3_small_sfx`, bypass the optional "reprompt" step, keep **8 steps, CFG 1, sampler lcm, scheduler simple**. Export it in API format and save it as `assets/sa3_small_sfx_api.json` in this skill so later runs can queue it over HTTP. Prompt like a sound library entry: the source, the action, the space ("heavy wooden door slam, small stone room, short tail"). Generate 4-8 takes and keep the best one or two.
+Generate (ComfyUI running with the tier's flags):
+
+```bash
+# one sound, 3 seeds
+python <skill>/bin/sa3_generate.py --prompt "heavy wooden door slam, small stone room, short tail" --seconds 2 --count 3 --out work/sa3
+# a list: [{"name": "door", "prompt": "...", "seconds": 3}, ...]
+python <skill>/bin/sa3_generate.py --batch prompts.json --seed 100 --count 3 --out work/sa3
+python <skill>/bin/finish_sfx.py work/sa3 work/sa3_ready --format ogg
+```
+
+The graph is `assets/sa3_small_sfx_api.json` (Small-SFX checkpoint, T5Gemma via CLIPLoader type `stable_audio`, **8 steps, CFG 1, lcm, simple**). `sa3_generate.py` writes `sa3_manifest.json` with prompt, seed and timing for every take: keep it for anything you ship.
+
+Prompting, from the first test batch (`examples/sound/ai/manifest.json` has the exact prompts):
+- Write it like a sound-library entry: source, action, material, space, tail ("glass crystal shattering into many pieces, bright tinkling shards falling on stone floor, short tail").
+- Impacts, shatters, whooshes, roars, creature and insect swarms, stone grinding, footsteps and explosions came out usable on the first seeds.
+- The model puts the sound at the start and leaves silence after; ask for a little more length than you need and let `finish_sfx.py` trim it. A 4 s request gave about 2-2.5 s of sound.
+- Bright tonal UI sounds (coin chimes, blips) came out as noisy washes. Use `sfx_synth.py` for those.
+- The agent cannot hear the takes: compare spectrograms (`ffmpeg -i take.flac -lavfi showspectrumpic=s=400x160 take.png`) to drop broken or empty takes, then let the user pick by ear.
 
 ## 4. Finish (always)
 
@@ -80,3 +97,5 @@ Line up transients by eye in any waveform view or with `adelay` in milliseconds.
 |---|---|
 | `bin/sfx_synth.py` | procedural retro SFX, standard library only |
 | `bin/finish_sfx.py` | FFmpeg finishing pass and manifest |
+| `bin/sa3_generate.py` | queue Stable Audio 3 Small-SFX takes on a running ComfyUI, standard library only |
+| `assets/sa3_small_sfx_api.json` | the Small-SFX API graph it rewrites |
