@@ -1,0 +1,19 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "servers": {
+      "aseprite": {
+        "type": "local",
+        "command": [
+          "<ROOT>/aseprite-mcp/.venv/Scripts/python.exe",
+          "-m",
+          "aseprite_mcp"
+        ],
+        "environment": {
+          "PYTHONPATH": "<ROOT>/aseprite-mcp",
+          "ASEPRITE_PATH": "<ROOT>/aseprite/build/bin/aseprite.exe"
+        }
+      }
+    }
+  }
+}

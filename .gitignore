@@ -1,0 +1,28 @@
+# model weights and big binaries are downloaded, never committed
+*.safetensors
+*.ckpt
+*.pt
+*.pth
+*.bin
+*.gguf
+*.onnx
+
+# generated work and local config
+work/
+renders/
+_tiles/
+config/
+*.local.json
+.download/
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# os / editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -1,0 +1,38 @@
+{
+  "1": {
+    "class_type": "SkinTokensModelLoader",
+    "inputs": {
+      "model_name": "experiments/articulation_xl_quantization_256_token_4/grpo_1400.ckpt"
+    }
+  },
+  "2": {
+    "class_type": "SkinTokensLoadMesh",
+    "inputs": {
+      "mesh_path": "REPLACED_BY_RIG_SKINTOKENS_PY"
+    }
+  },
+  "3": {
+    "class_type": "SkinTokensGenerator",
+    "inputs": {
+      "model": ["1", 0],
+      "input_mesh": ["2", 0],
+      "top_k": 5,
+      "top_p": 0.95,
+      "temperature": 1.0,
+      "repetition_penalty": 2.0,
+      "num_beams": 10,
+      "use_skeleton": false,
+      "use_transfer": true,
+      "use_postprocess": false,
+      "bone_names": "mixamo",
+      "output_format": ".glb",
+      "bpy_server_mode": "Headless (Blender)"
+    }
+  },
+  "4": {
+    "class_type": "SkinTokensRigPreviewer",
+    "inputs": {
+      "mesh_path": ["3", 0]
+    }
+  }
+}

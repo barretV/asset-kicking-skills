@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "aseprite": {
+      "command": "<ROOT>/aseprite-mcp/.venv/Scripts/python.exe",
+      "args": ["-m", "aseprite_mcp"],
+      "env": {
+        "PYTHONPATH": "<ROOT>/aseprite-mcp",
+        "ASEPRITE_PATH": "<ROOT>/aseprite/build/bin/aseprite.exe"
+      }
+    }
+  }
+}

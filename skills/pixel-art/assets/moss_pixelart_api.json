@@ -1,0 +1,15 @@
+{
+  "_comment": "MOSS-Image Turbo + moss-pixelart-v0.3. API-format graph for POST /prompt. 8 steps, CFG 1.0, euler/simple, flux2-vae_small. No custom nodes. See bin/moss_generate.py (it builds the same graph and overrides prompt/size/seed).",
+  "prompt": {
+    "1": {"class_type": "UNETLoader", "inputs": {"unet_name": "moss_image_sft_turbo_int8_convrot.safetensors", "weight_dtype": "default"}},
+    "2": {"class_type": "LoraLoaderModelOnly", "inputs": {"model": ["1", 0], "lora_name": "moss-pixelart-v.0.3.safetensors", "strength_model": 1.0}},
+    "3": {"class_type": "CLIPLoader", "inputs": {"clip_name": "qwen3.5_9b_w4a8_gptq.safetensors", "type": "moss_image", "device": "default"}},
+    "4": {"class_type": "CLIPTextEncode", "inputs": {"text": "pxl8x, pixel art sprite of a chibi axolotl knight, coral pink axolotl with feathery pink gills, small silver knight helmet with a teal plume, silver chestplate, short sword, standing idle, front three-quarter view, flat lavender background, limited palette, crisp pixel art, centered", "clip": ["3", 0]}},
+    "5": {"class_type": "CLIPTextEncode", "inputs": {"text": "", "clip": ["3", 0]}},
+    "6": {"class_type": "EmptyFlux2LatentImage", "inputs": {"width": 512, "height": 512, "batch_size": 1}},
+    "7": {"class_type": "KSampler", "inputs": {"model": ["2", 0], "seed": 777, "steps": 8, "cfg": 1.0, "sampler_name": "euler", "scheduler": "simple", "positive": ["4", 0], "negative": ["5", 0], "latent_image": ["6", 0], "denoise": 1.0}},
+    "8": {"class_type": "VAELoader", "inputs": {"vae_name": "flux2-vae_small.safetensors"}},
+    "9": {"class_type": "VAEDecode", "inputs": {"samples": ["7", 0], "vae": ["8", 0]}},
+    "10": {"class_type": "SaveImage", "inputs": {"images": ["9", 0], "filename_prefix": "moss_pxl/sprite"}}
+  }
+}
