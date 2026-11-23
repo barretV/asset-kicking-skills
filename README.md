@@ -90,9 +90,7 @@ On 6 GB: TRELLIS.2 ~3.5 min, Hi3D refine ~10 min, rigging ~70 s. Measuring, clea
 
 Two engines, one finishing pass. **Procedural** retro sounds with no GPU at all (coins, lasers, jumps, hits, explosions, power-ups). **AI sound design** with Stable Audio 3 Small-SFX for the things a synth can't fake: sword clangs, shattering crystal, monster roars, bee swarms, grinding stone doors, footsteps on gravel. Type what you want to hear; on a 6 GB laptop GPU each take is ready in **2 to 3 seconds** (under 2 GB of VRAM), so your agent makes several takes of every sound and keeps the best. Then one script makes everything game-ready: mono, trimmed, faded, loudness-matched, with a manifest of the prompt and seed behind each file.
 
-<p align="center"><a href="docs/showcase/sound_demo.mp4"><img src="docs/showcase/sound_demo_thumb.webp" alt="Sound demo video: 4 procedural and 9 AI sound effects with waveforms and their prompts" width="100%"></a></p>
-
-<!-- SOUND_DEMO_VIDEO: drag docs/showcase/sound_demo.mp4 into this README in GitHub's web editor to get an inline player, and put the user-attachments link here -->
+https://github.com/user-attachments/assets/142760bb-eb5f-4118-8f24-e7294472cd4d
 
 <p align="center"><img src="docs/showcase/sound.webp" alt="Waveforms: coin, laser, explosion and power-up from the synth; sword hit, crystal shatter, monster roar and stone door from Stable Audio 3" width="100%"></p>
 
