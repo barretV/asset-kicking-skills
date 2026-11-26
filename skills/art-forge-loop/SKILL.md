@@ -127,6 +127,10 @@ python <skill>/scripts/forge_loop.py work/forge/<job> status
 4. **Report.** After each pass, run `report` and give the user its first lines: N of M good, how many left, the lowest scores and their notes.
 5. **Repeat** until `status` prints `ALL FINAL`.
 
+## 2b. Live dashboard (watch the forge)
+`node <skill>/dashboard/server.mjs` from the project root serves http://127.0.0.1:5390: what is generating now, ComfyUI's queue, the newest candidates with scores and picks, and a contact sheet per job against its bar. It also scans every git worktree's `work/forge/`, shows who holds the GPU lock, and is read-only. Offer it when the user wants to watch a run, and start it in the background. Options and the files it reads are in `dashboard/README.md`.
+- To show every candidate's score, not only the pick's, also write `<job>/scores.json` while judging: `{"<target>": {"r1-s1007": 8.9, "r1-s1024": 9.1}}`.
+
 ## 3. Grading (the part that matters)
 Score against the job's `bar_text`. For characters, cosmetics and skins, a 9.5 means **all** of these hold:
 - **Instantly the original character:** same colours, face, eye style, and signature features (hat, shell, ears, gills).

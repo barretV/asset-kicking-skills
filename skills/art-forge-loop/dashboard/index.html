@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Art Forge</title>
+<style>
+  :root {
+    --bg: #0d0f15; --panel: #151925; --panel2: #1b2030; --line: #283046; --text: #e4e8f1; --muted: #8e97ad; --dim: #5d6680;
+    --pass: #45d483; --near: #f2b53a; --low: #ff6b86; --accent: #7fd6ff; --leaf: #8be08f; --pink: #ff5fa8;
+    --chk1: #191d29; --chk2: #20253350;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif; }
+  a { color: var(--accent); }
+  header { display: flex; align-items: center; gap: 14px; padding: 14px 20px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: #0d0f15ee; backdrop-filter: blur(6px); z-index: 5; }
+  header h1 { font-size: 18px; margin: 0; letter-spacing: .3px; }
+  header h1 span { color: var(--pink); }
+  .live { width: 9px; height: 9px; border-radius: 50%; background: var(--dim); box-shadow: 0 0 0 0 transparent; }
+  .live.on { background: var(--pass); animation: pulse 2s infinite; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 #45d48388; } 70% { box-shadow: 0 0 0 8px #45d48300; } 100% { box-shadow: 0 0 0 0 #45d48300; } }
+  header .meta { color: var(--muted); font-size: 12px; margin-left: auto; text-align: right; }
+  main { padding: 18px 20px 60px; display: grid; gap: 18px; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); max-width: 1700px; margin: 0 auto; }
+  @media (max-width: 1000px) { main { grid-template-columns: 1fr; padding: 14px 16px 40px; } }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; min-width: 0; }
+  section.wide { grid-column: 1 / -1; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--muted); margin: 0 0 12px; display: flex; align-items: center; gap: 8px; }
+  h2 .n { color: var(--text); background: var(--panel2); border: 1px solid var(--line); padding: 0 7px; border-radius: 9px; font-size: 11px; letter-spacing: 0; }
+  .muted { color: var(--muted); } .dim { color: var(--dim); }
+  .pill { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 11px; border: 1px solid var(--line); background: var(--panel2); color: var(--muted); white-space: nowrap; }
+  .pill.gpu { color: var(--pink); border-color: #ff5fa855; }
+  .pill.ok { color: var(--pass); border-color: #45d48355; }
+  .pill.bad { color: var(--low); border-color: #ff6b8655; }
+  .now { display: grid; grid-template-columns: 220px 1fr; gap: 16px; }
+  @media (max-width: 640px) { .now { grid-template-columns: 1fr; } }
+  .previewbox { aspect-ratio: 1; border-radius: 10px; border: 1px solid var(--line); overflow: hidden; display: grid; place-items: center; position: relative; }
+  .previewbox img { width: 100%; height: 100%; object-fit: contain; }
+  .previewbox .cap { position: absolute; left: 6px; bottom: 6px; font-size: 11px; background: #000a; padding: 1px 6px; border-radius: 6px; color: var(--muted); }
+  .checker { background-color: var(--chk1); background-image: linear-gradient(45deg, #232838 25%, transparent 25%), linear-gradient(-45deg, #232838 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #232838 75%), linear-gradient(-45deg, transparent 75%, #232838 75%); background-size: 16px 16px; background-position: 0 0, 0 8px, 8px -8px, -8px 0; }
+  .kv { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; font-size: 13px; }
+  .kv b { font-weight: 500; color: var(--muted); }
+  .big { font-size: 20px; font-weight: 650; margin-bottom: 6px; word-break: break-word; }
+  .bar { height: 8px; background: var(--panel2); border-radius: 5px; overflow: hidden; border: 1px solid var(--line); margin: 8px 0 4px; }
+  .bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--leaf), var(--accent)); transition: width .8s; }
+  .bar.est i { background: repeating-linear-gradient(90deg, var(--leaf) 0 10px, #6cc874 10px 20px); }
+  .prompt { font-size: 12px; color: var(--muted); margin-top: 8px; max-height: 4.4em; overflow: hidden; }
+  .log { font: 12px/1.4 ui-monospace, Consolas, monospace; color: var(--muted); background: #0b0d13; border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; margin-top: 10px; white-space: pre-wrap; word-break: break-all; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; color: var(--dim); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: .8px; padding: 4px 6px; border-bottom: 1px solid var(--line); }
+  td { padding: 6px; border-bottom: 1px solid #202638; vertical-align: top; }
+  tr.click { cursor: pointer; } tr.click:hover td { background: var(--panel2); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 10px; }
+  .card { background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; cursor: zoom-in; position: relative; }
+  .card.picked { border-color: var(--pass); box-shadow: 0 0 0 1px var(--pass) inset; }
+  .card .im { aspect-ratio: 1; display: grid; place-items: center; }
+  .card .im img { max-width: 92%; max-height: 92%; image-rendering: auto; }
+  .card .lab { padding: 5px 7px 6px; font-size: 11px; line-height: 1.35; }
+  .card .lab .t { color: var(--text); font-weight: 550; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card .lab .s { color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .score { position: absolute; top: 6px; right: 6px; font-weight: 700; font-size: 12px; padding: 1px 7px; border-radius: 8px; background: #000c; border: 1px solid currentColor; }
+  .score.pass { color: var(--pass); } .score.near { color: var(--near); } .score.low { color: var(--low); } .score.none { color: var(--dim); }
+  .badge { position: absolute; top: 6px; left: 6px; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 8px; background: var(--pass); color: #04140a; }
+  .badge.new { background: var(--accent); color: #031018; }
+  .jobs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .jobbtn { background: var(--panel2); border: 1px solid var(--line); color: var(--text); border-radius: 10px; padding: 6px 10px; cursor: pointer; font: inherit; font-size: 12px; text-align: left; }
+  .jobbtn:hover { border-color: var(--accent); }
+  .jobbtn.sel { border-color: var(--accent); background: #18304066; }
+  .jobbtn.stale { opacity: .55; }
+  .jobbtn .l { color: var(--dim); font-size: 11px; }
+  .jobbtn .act { color: var(--pink); }
+  .sheet { display: grid; gap: 8px; }
+  .row { display: grid; grid-template-columns: 170px 1fr; gap: 10px; align-items: start; padding: 8px 0; border-top: 1px solid #202638; }
+  .row .name { font-size: 12px; }
+  .row .name .k { font-weight: 600; word-break: break-all; }
+  .row .name .note { color: var(--muted); font-size: 11px; margin-top: 4px; }
+  .row .cells { display: flex; gap: 8px; flex-wrap: wrap; }
+  .row .cells .card { width: 118px; }
+  .row .cells .card.ref { border-style: dashed; }
+  .st { font-size: 10px; text-transform: uppercase; letter-spacing: .8px; padding: 0 6px; border-radius: 6px; border: 1px solid var(--line); }
+  .st.final { color: var(--pass); border-color: #45d48355; } .st.judge { color: var(--near); border-color: #f2b53a55; }
+  .st.generating { color: var(--pink); border-color: #ff5fa855; } .st.queued { color: var(--accent); border-color: #7fd6ff44; } .st.capped { color: var(--low); border-color: #ff6b8655; }
+  .filters { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; color: var(--muted); font-size: 12px; flex-wrap: wrap; }
+  .filters label { display: flex; gap: 5px; align-items: center; cursor: pointer; }
+  #lb { position: fixed; inset: 0; background: #05060acc; display: none; place-items: center; z-index: 20; cursor: zoom-out; padding: 20px; }
+  #lb.on { display: grid; }
+  #lb .inner { max-width: min(96vw, 1200px); max-height: 94vh; display: grid; gap: 8px; justify-items: center; }
+  #lb img { max-width: 100%; max-height: 84vh; border-radius: 10px; border: 1px solid var(--line); }
+  #lb .cap { color: var(--muted); font-size: 13px; text-align: center; }
+  .empty { color: var(--dim); font-size: 13px; padding: 10px 0; }
+</style>
+</head>
+<body>
+<header>
+  <div class="live" id="live"></div>
+  <h1>Art <span>Forge</span></h1>
+  <span class="pill" id="comfyPill">ComfyUI …</span>
+  <span class="pill" id="lockPill">GPU …</span>
+  <div class="meta" id="meta"></div>
+</header>
+<main>
+  <section id="nowSec"><h2>Now forging</h2><div id="now"></div></section>
+  <section><h2>Queue</h2><div id="queue"></div></section>
+  <section class="wide"><h2>Recent candidates <span class="n" id="recentN">0</span></h2>
+    <div class="filters"><label><input type="checkbox" id="hideOld"> only jobs active in the last 6 h</label><span class="dim">click any image for full size</span></div>
+    <div class="grid" id="recent"></div></section>
+  <section class="wide"><h2>Jobs <span class="n" id="jobsN">0</span></h2>
+    <div class="jobs" id="jobs"></div>
+    <div id="sheet"></div></section>
+</main>
+<div id="lb"><div class="inner"><img id="lbImg" class="checker" alt=""><div class="cap" id="lbCap"></div></div></div>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const ago = (ms) => { const s = Math.max(0, (Date.now() - ms) / 1000); return s < 60 ? `${s | 0}s ago` : s < 3600 ? `${(s / 60) | 0}m ago` : s < 86400 ? `${(s / 3600) | 0}h ago` : `${(s / 86400) | 0}d ago`; };
+const band = (v, bar) => v == null ? 'none' : v >= bar ? 'pass' : v >= bar - 0.5 ? 'near' : 'low';
+const scoreTag = (v, bar) => `<span class="score ${band(v, bar)}" title="bar ${bar}">${v == null ? '–' : (v >= bar ? '✓ ' : '') + Number(v).toFixed(1)}</span>`;
+let S = null, selJob = null, jobCache = {}, userPicked = false, showOld = false;
+const put = (id, html) => { const el = $(id); if (el._h !== html) { el._h = html; el.innerHTML = html; } }; // skip unchanged sections: no image flicker
+
+function lockText(l) {
+  if (!l.held) return 'GPU free';
+  return `GPU: ${l.owner}${l.job ? ' · ' + l.job : ''}`;
+}
+function lockSince(l) {
+  if (!l.held) return '';
+  return l.time ? `since ${l.time} (${ago(l.since)})` : ago(l.since);
+}
+
+function card(c, opts = {}) {
+  const lab = opts.lab ?? `<div class="t">${esc(c.target)}</div><div class="s">${esc(c.jobName)} · r${c.round} · s${c.seed}</div>`;
+  const fresh = Date.now() - c.mtime < 5 * 60e3;
+  return `<div class="card ${c.picked ? 'picked' : ''} ${opts.cls || ''}" data-src="${esc(c.hi || c.url)}" data-cap="${esc(opts.cap || `${c.target} · ${c.jobName} · round ${c.round} · seed ${c.seed} · score ${c.score ?? '–'} (bar ${c.bar})${c.picked ? ' · PICKED' : ''}`)}">
+    ${c.picked ? '<span class="badge">PICK</span>' : fresh ? '<span class="badge new">NEW</span>' : ''}
+    ${opts.noScore ? '' : scoreTag(c.score, c.bar)}
+    <div class="im checker"><img decoding="async" src="${esc(c.url)}" alt=""></div>
+    <div class="lab">${lab}</div></div>`;
+}
+
+function renderNow() {
+  const n = S.now, c = S.comfy, r = c.running;
+  const img = c.preview || (c.recent[0]?.images?.[0]) || n?.target?.ref;
+  const imgCap = c.preview ? 'live preview' : c.recent[0]?.images?.[0] ? `last ComfyUI output · ${ago(c.recent[0].end)}` : n?.target?.ref ? 'ref' : '';
+  let h = `<div class="now"><div class="previewbox checker">${img ? `<img src="${esc(img)}" alt="" data-src="${esc(img)}" data-cap="${esc(imgCap)}">${imgCap ? `<span class="cap">${esc(imgCap)}</span>` : ''}` : '<span class="dim">no image yet</span>'}</div><div>`;
+  if (n) {
+    const j = n.job, t = n.target;
+    h += `<div class="big">${esc(t?.key || j.name)}</div>`;
+    h += `<div class="kv">
+      <b>Job</b><span>${esc(j.name)} <span class="dim">· ${esc(j.lane)}</span></span>
+      <b>Round</b><span>${t?.round ? `r${t.round}` : j.round.n ? `r${j.round.n}` : '–'} <span class="dim">of ${j.maxRounds} max · ${j.round.made}/${j.round.of} targets made this round</span></span>
+      <b>Targets</b><span>${j.counts.final}/${j.counts.total} final · ${j.passing} at bar ${j.bar} · ${j.counts.judge} to judge · ${j.counts.queued + j.counts.generating} to generate</span>
+      ${r ? `<b>Seed</b><span>${r.seed ?? '–'} · denoise ${r.denoise ?? '–'}${r.w ? ` · ${r.w}×${r.h}` : ''}${r.steps ? ' · ' + r.steps + ' steps' : ''}</span>` : ''}
+      <b>GPU</b><span>${esc(lockText(S.lock))} <span class="dim">${esc(lockSince(S.lock))}</span></span>
+    </div>`;
+    const frac = j.round.of ? j.round.made / j.round.of : 0;
+    h += `<div class="bar"><i style="width:${(frac * 100).toFixed(1)}%"></i></div><div class="dim" style="font-size:12px">round progress ${j.round.made}/${j.round.of}</div>`;
+  } else {
+    h += `<div class="big">${r ? 'ComfyUI is generating' : S.lock.held ? 'No forge job running · GPU in use elsewhere' : 'Idle · GPU free'}</div><div class="kv"><b>GPU</b><span>${esc(lockText(S.lock))} <span class="dim">${esc(lockSince(S.lock))}</span></span></div>`;
+    if (!r) h += `<div class="empty">No forge job is generating. Newest activity: ${S.jobs[0] ? esc(S.jobs[0].name) + ' · ' + ago(S.jobs[0].newest) : 'none'}.</div>`;
+  }
+  if (r) {
+    const p = c.progress;
+    h += `<div class="bar ${p && !p.exact ? 'est' : ''}" id="stepBar"><i style="width:${p ? (p.frac * 100).toFixed(1) : 2}%"></i></div><div class="dim" style="font-size:12px" id="stepLab">ComfyUI image: ${p ? esc(p.label) + (p.exact ? '' : ' (estimate)') : 'running'}${r.target ? ' · ' + esc(r.target) : ''}</div>`;
+    if (r.text) h += `<div class="prompt" title="${esc(r.text)}">${esc(r.text)}</div>`;
+  }
+  if (n?.job.log) h += `<div class="log">${esc(n.job.log.file)} · ${ago(n.job.log.mtime)}\n${esc(n.job.log.lines.slice(-3).join('\n'))}</div>`;
+  h += `</div></div>`;
+  put('now', h);
+}
+
+function renderQueue() {
+  const c = S.comfy;
+  let h = `<div class="muted" style="margin-bottom:6px">ComfyUI ${c.online ? `<span class="pill ok">online</span> · ${c.running ? '1 running' : 'nothing running'} · ${c.pending.length} pending` : `<span class="pill bad">offline</span> <span class="dim">${esc(c.url)}</span>`}</div>`;
+  if (c.pending.length) {
+    h += `<table><tr><th>#</th><th>target</th><th>round</th><th>seed</th><th>denoise</th></tr>`;
+    for (const p of c.pending.slice(0, 12)) h += `<tr><td class="dim">${p.num}</td><td>${esc(p.target || p.prefix || '?')}</td><td>${p.round ? 'r' + p.round : '–'}</td><td>${p.seed ?? '–'}</td><td>${p.denoise ?? '–'}</td></tr>`;
+    if (c.pending.length > 12) h += `<tr><td colspan="5" class="dim">+${c.pending.length - 12} more</td></tr>`;
+    h += `</table>`;
+  }
+  h += `<div style="margin-top:14px"></div><table><tr><th>job</th><th>to gen</th><th>to judge</th><th>final</th><th>rounds left</th></tr>`;
+  if (!S.queue.length) h += `<tr><td colspan="5" class="empty">No job has pieces waiting.</td></tr>`;
+  for (const j of S.queue) {
+    const act = S.activeIds.includes(j.id);
+    h += `<tr class="click" data-job="${esc(j.id)}"><td>${act ? '<span class="pill gpu">live</span> ' : ''}${esc(j.name)} <span class="dim">· ${esc(j.lane)}</span></td><td>${j.counts.queued + j.counts.generating}</td><td>${j.counts.judge}</td><td>${j.counts.final}/${j.counts.total}</td><td>≤ ${j.roundsLeft}</td></tr>`;
+  }
+  h += `</table><div class="dim" style="font-size:11px;margin-top:6px">rounds left = target-rounds still allowed before max_rounds (an upper bound).</div>`;
+  put('queue', h);
+}
+
+function renderRecent() {
+  let list = S.recent;
+  if ($('hideOld').checked) list = list.filter((c) => Date.now() - c.mtime < 6 * 3600e3);
+  $('recentN').textContent = list.length;
+  put('recent', list.length ? list.map((c) => card(c)).join('') : '<div class="empty">No candidates yet.</div>');
+}
+
+function renderJobs() {
+  $('jobsN').textContent = S.jobs.length;
+  if (!userPicked || !S.jobs.some((j) => j.id === selJob)) selJob = S.activeIds[0] || S.jobs[0]?.id || null;
+  const isStale = (j) => !S.activeIds.includes(j.id) && j.id !== selJob && Date.now() - j.newest > 24 * 3600e3;
+  const older = S.jobs.filter(isStale).length;
+  put('jobs', S.jobs.filter((j) => showOld || !isStale(j)).map((j) => {
+    const act = S.activeIds.includes(j.id), stale = Date.now() - j.newest > 24 * 3600e3;
+    return `<button class="jobbtn ${j.id === selJob ? 'sel' : ''} ${stale && !act ? 'stale' : ''}" data-job="${esc(j.id)}">
+      ${act ? '<span class="act">● </span>' : ''}<b>${esc(j.name)}</b> <span class="l">${esc(j.lane)}</span><br>
+      <span class="l">${j.counts.final}/${j.counts.total} final · ${j.passing} ≥ ${j.bar} · ${ago(j.newest)}</span></button>`;
+  }).join('') + (older ? `<button class="jobbtn" id="oldBtn">${showOld ? 'hide' : 'show'} ${older} older job${older > 1 ? 's' : ''}<br><span class="l">no activity in 24 h</span></button>` : ''));
+  loadSheet();
+}
+
+async function loadSheet() {
+  if (!selJob) { put('sheet', ''); return; }
+  const meta = S.jobs.find((j) => j.id === selJob);
+  const key = selJob + ':' + (meta?.newest || 0);
+  if (!jobCache[key]) { try { jobCache[key] = await (await fetch('/api/job?id=' + encodeURIComponent(selJob))).json(); } catch { return; } }
+  const j = jobCache[key];
+  let h = `<div class="muted" style="margin-bottom:8px"><b style="color:var(--text)">${esc(j.name)}</b> · ${esc(j.lane)} · ${esc(j.mode)} · bar <b style="color:var(--pass)">${j.bar}</b> · max ${j.maxRounds} rounds · ${j.passing}/${j.counts.total} at bar${j.hasJob ? '' : ' · <span class="dim">no job.json</span>'}</div>`;
+  if (j.barText) h += `<div class="dim" style="font-size:12px;margin-bottom:8px">${esc(j.barText)}</div>`;
+  h += `<div class="sheet">`;
+  for (const t of j.targets) {
+    const cells = [];
+    if (t.ref) cells.push(card({ url: t.ref, target: t.key, jobName: j.name, round: 0, seed: 0, mtime: 0, bar: j.bar }, { cls: 'ref', noScore: true, lab: '<div class="s">ref / init</div>', cap: `${t.key} · ref / init` }));
+    for (const c of [...t.cands].reverse()) cells.push(card({ ...c, target: t.key, jobName: j.name, bar: j.bar }, { lab: `<div class="t">r${c.round} · s${c.seed}</div><div class="s">${c.picked ? 'picked' : ago(c.mtime)}</div>` }));
+    if (t.status === 'generating') cells.splice(t.ref ? 1 : 0, 0, `<div class="card" style="cursor:default"><div class="im checker"><span class="st generating">forging r${t.needsRound}…</span></div><div class="lab"><div class="s">in progress</div></div></div>`);
+    h += `<div class="row"><div class="name"><div class="k">${esc(t.key)}</div>
+      <div style="margin-top:4px"><span class="st ${t.status}">${t.status}</span> ${t.pick ? scoreTag(t.pick.score, j.bar).replace('class="score', 'style="position:static" class="score') : ''}</div>
+      <div class="note">${t.pick ? `judged r${t.pick.round ?? '?'}${t.pick.note ? ' · ' + esc(t.pick.note) : ''}` : 'not judged yet'}</div></div>
+      <div class="cells">${cells.join('') || '<span class="empty">no candidates</span>'}</div></div>`;
+  }
+  h += `</div>`;
+  put('sheet', h);
+}
+
+function render() {
+  $('live').classList.add('on');
+  $('comfyPill').className = 'pill ' + (S.comfy.online ? 'ok' : 'bad');
+  $('comfyPill').textContent = S.comfy.online ? `ComfyUI ${S.comfy.running ? 'busy' : 'idle'} · ${S.comfy.pending.length} queued` : 'ComfyUI offline';
+  $('lockPill').className = 'pill ' + (S.lock.held ? 'gpu' : 'ok');
+  $('lockPill').textContent = lockText(S.lock);
+  $('meta').innerHTML = `${esc(S.root)}<br>${S.lanes.length} lanes · updated <span id="upd">${new Date(S.at).toLocaleTimeString()}</span>`;
+  renderNow(); renderQueue(); renderRecent(); renderJobs();
+}
+
+document.addEventListener('click', (e) => {
+  if (e.target.closest('#oldBtn')) { showOld = !showOld; renderJobs(); return; }
+  const jb = e.target.closest('[data-job]');
+  if (jb) { selJob = jb.dataset.job; userPicked = true; renderJobs(); if (jb.tagName === 'TR') $('sheet').scrollIntoView({ behavior: 'smooth' }); return; }
+  const c = e.target.closest('[data-src]');
+  if (c && !e.target.closest('#lb')) { $('lbImg').src = c.dataset.src; $('lbCap').textContent = c.dataset.cap || ''; $('lb').classList.add('on'); return; }
+  if (e.target.closest('#lb')) $('lb').classList.remove('on');
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') $('lb').classList.remove('on'); });
+$('hideOld').addEventListener('change', () => S && renderRecent());
+
+function connect() {
+  const es = new EventSource('/api/stream');
+  es.addEventListener('state', (e) => { S = JSON.parse(e.data); render(); });
+  es.addEventListener('ping', (e) => {
+    const d = JSON.parse(e.data);
+    const u = $('upd'); if (u) u.textContent = new Date(d.at).toLocaleTimeString();
+    const p = d.progress, bar = document.querySelector('#stepBar i'), lab = $('stepLab');
+    if (p && bar) { bar.style.width = (p.frac * 100).toFixed(1) + '%'; if (lab) lab.firstChild.textContent = `ComfyUI image: ${p.label}${p.exact ? '' : ' (estimate)'}`; }
+  });
+  es.addEventListener('progress', (e) => { const p = JSON.parse(e.data), bar = document.querySelector('#stepBar i'); if (bar) bar.style.width = (100 * p.value / p.max).toFixed(1) + '%'; });
+  es.addEventListener('preview', () => { const im = document.querySelector('.previewbox img'); if (im) im.src = '/comfy/preview?t=' + Date.now(); });
+  es.onerror = () => { $('live').classList.remove('on'); };
+}
+connect();
+</script>
+</body>
+</html>
