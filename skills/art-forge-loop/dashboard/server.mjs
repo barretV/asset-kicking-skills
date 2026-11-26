@@ -1,12 +1,13 @@
 #!/usr/bin/env node
-// Art Forge dashboard: a live, read-only view of art-forge-loop jobs, the GPU lock and ComfyUI.
+// Art Forge dashboard: a live view of art-forge-loop jobs, the GPU lock and ComfyUI, with a "good enough" button.
 //
 //   node <skill>/dashboard/server.mjs                  # project root = current folder, http://127.0.0.1:5390
 //   node <skill>/dashboard/server.mjs --root ../my-game --port 5390 --comfy http://127.0.0.1:8188
 //
 // Scans <root>/work/forge/<job>/ and every git worktree <root>/.claude/worktrees/<lane>/work/forge/<job>/
 // (plus any --forge <dir>). Finds the GPU lock by walking up from the root for a `.gpu-lock` folder
-// (or --lock <dir>). Zero dependencies. Never writes to forge folders, the lock or ComfyUI.
+// (or --lock <dir>). Zero dependencies. Its one write is <job>/approvals.json when the owner marks a candidate
+// good enough (POST /api/approve, same-origin only); --read-only turns that off. Never touches the lock or ComfyUI.
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -21,6 +22,7 @@ const PORT = Number(opt('port', process.env.FORGE_DASH_PORT || 5390));
 const HOST = opt('host', '127.0.0.1');
 const COMFY = opt('comfy', process.env.COMFY_URL || 'http://127.0.0.1:8188').replace(/\/$/, '');
 const EXTRA = optAll('forge').map((d) => path.resolve(d));
+const READ_ONLY = args.includes('--read-only');
 const TICK_MS = 3000;
 const DEFAULTS = { bar: 9.5, max_rounds: 10, seeds: 2, mode: 'pixel' };
 const IMG = /\.(png|jpe?g|webp|gif)$/i;
@@ -83,13 +85,14 @@ function readJob(L, name) {
   const cfg = { ...DEFAULTS, ...(job?.mode === 'illustration' ? { seeds: 2 } : {}), ...(job || {}) };
   const picks = readJSON(path.join(dir, 'picks.json')) || {};
   const scores = readJSON(path.join(dir, 'scores.json')) || {};
+  const approvals = readJSON(path.join(dir, 'approvals.json')) || {};
   const keys = Object.keys(cfg.targets || {});
   for (const e of ls(outDir)) if (e.isDirectory() && !keys.some((k) => slug(k) === e.name)) keys.push(e.name);
   const id = `${L.lane}/${name}`;
   const toUrl = (p) => (p ? `/img?lane=${encodeURIComponent(L.lane)}&p=${encodeURIComponent(p)}` : null);
   // paths in job.json / picks.json are relative to the lane's project root
   const laneRel = (p) => (p ? (path.isAbsolute(p) ? rel(L.root, p) : p.replace(/\\/g, '/')) : null);
-  let newest = mtime(path.join(dir, 'job.json'));
+  let newest = Math.max(mtime(path.join(dir, 'job.json')), mtime(path.join(dir, 'approvals.json')));
   const targets = [];
   for (const key of keys) {
     const t = (cfg.targets || {})[key] || {};
@@ -99,7 +102,8 @@ function readJob(L, name) {
     const tmpAge = (f) => Math.max(mtime(path.join(td, f)), ...['', 'raw', 'native', 'fixed'].map((s) => mtime(path.join(td, f, s))));
     const generating = files.some((f) => f.startsWith('_tmp') && Date.now() - tmpAge(f) < 8 * 60e3);
     const doneRounds = new Set(files.map((f) => /^r(\d+)\.done$/.exec(f)).filter(Boolean).map((m) => +m[1]));
-    const pk = picks[key] || null;
+    const ap = approvals[key]?.path ? approvals[key] : null;
+    const pk = ap ? { ...(picks[key] || {}), path: ap.path, final: true, approved: true } : (picks[key] || null);
     const pickBase = pk ? [pk.path, pk.best].filter(Boolean).map((p) => path.basename(p).replace(/\.png$/, '')) : [];
     const sc = scores[key] || scores[slug(key)] || {};
     const cands = [];
@@ -114,7 +118,7 @@ function readJob(L, name) {
       const picked = pickBase.includes(stem);
       if (score == null && picked && pk && typeof pk.score === 'number' && path.basename(pk.path || '') === f) score = pk.score;
       cands.push({
-        file: f, round: +m[1], seed: +m[2], score, picked, mtime: mt,
+        file: f, round: +m[1], seed: +m[2], score, picked, mtime: mt, approved: !!ap && path.basename(ap.path) === f,
         url: toUrl(rel(L.root, p)), hi: files.includes(stem + '-hi.png') ? toUrl(rel(L.root, path.join(td, stem + '-hi.png'))) : null,
       });
     }
@@ -131,7 +135,7 @@ function readJob(L, name) {
     else if (doneRounds.has(judged + 1)) status = 'judge';
     else { status = 'queued'; needsRound = judged + 1; }
     targets.push({
-      key, status, needsRound, generating, judged, lastRound,
+      key, status, needsRound, generating, judged, lastRound, approved: ap ? { file: path.basename(ap.path), at: ap.at || null } : null,
       roundsLeft: status === 'final' || status === 'capped' ? 0 : Math.max(0, maxR - judged),
       pick: pk ? { score: pk.score ?? null, round: pk.round ?? null, note: pk.note || '', final: !!pk.final, file: pk.path ? path.basename(pk.path) : null } : null,
       ref: toUrl(laneRel(t.ref || t.init)), prompt: t.prompt || '', cands,
@@ -153,6 +157,42 @@ function readJob(L, name) {
     log: logs[0] ? { file: path.basename(logs[0].p), mtime: logs[0].m, lines: tail(logs[0].p) } : null,
     targets,
   };
+}
+
+// ---------- the one write: <job>/approvals.json ----------
+function approve(body) {
+  const [lane, ...n] = String(body.job || '').split('/');
+  const L = lanes().find((l) => l.lane === lane);
+  if (!L || n.length !== 1 || !n[0] || n[0].startsWith('.')) throw new Error('no such job');
+  const dir = path.join(L.forge, n[0]);
+  const job = readJob(L, n[0]);
+  const t = job && job.targets.find((x) => x.key === body.target);
+  if (!t) throw new Error('no such target');
+  const fp = path.join(dir, 'approvals.json');
+  const all = readJSON(fp) || {};
+  if (body.file == null) delete all[t.key];
+  else {
+    const f = String(body.file);
+    if (!CAND.test(f) || !t.cands.some((c) => c.file === f)) throw new Error('no such candidate');
+    all[t.key] = { path: rel(L.root, path.join(dir, 'out', slug(t.key), f)), at: new Date().toISOString(), by: 'dashboard' };
+  }
+  const tmp = fp + '.tmp';
+  fs.writeFileSync(tmp, JSON.stringify(all, null, 1));
+  fs.renameSync(tmp, fp);
+  return all[t.key] || null;
+}
+function sameOrigin(req) {
+  // a cross-site page cannot send a custom header without a CORS preflight, which this server never answers
+  if (req.headers['x-forge'] !== '1') return false;
+  const o = req.headers.origin;
+  return !o || o === `http://${req.headers.host}`;
+}
+function readBody(req, max = 4096) {
+  return new Promise((ok, bad) => {
+    let b = '';
+    req.on('data', (c) => { b += c; if (b.length > max) { bad(new Error('too big')); req.destroy(); } });
+    req.on('end', () => { try { ok(JSON.parse(b || '{}')); } catch (e) { bad(e); } });
+  });
 }
 
 function scanJobs() {
@@ -277,7 +317,7 @@ function snapshot() {
     .sort((a, b) => b.mtime - a.mtime).slice(0, 48);
   const strip = (j) => { const { targets, dir, ...rest } = j; return rest; };
   return {
-    at: Date.now(), root: ROOT, lanes: lanes().map((l) => l.lane),
+    at: Date.now(), root: ROOT, lanes: lanes().map((l) => l.lane), readOnly: READ_ONLY,
     lock,
     now: nowJob ? { job: strip(nowJob), target: nowTarget ? { key: nowTarget.key, round: nowTarget.needsRound || running?.round, status: nowTarget.status, ref: nowTarget.ref, done: nowTarget.cands.filter((c) => c.round === (nowTarget.needsRound || running?.round)).length } : null } : null,
     comfy: { url: COMFY, online: comfy.online, error: comfy.error, ws: comfy.ws, running, pending: comfy.pending, progress, recent: comfy.recent.slice(0, 4), preview: comfy.preview && Date.now() - comfy.preview.at < 60000 ? `/comfy/preview?t=${comfy.preview.at}` : null },
@@ -306,7 +346,16 @@ function send(res, code, body, type = 'text/plain; charset=utf-8', extra = {}) {
 
 const server = http.createServer(async (req, res) => {
   const u = new URL(req.url, 'http://x');
-  if (req.method !== 'GET') return send(res, 405, 'read-only');
+  if (req.method === 'POST' && u.pathname === '/api/approve') {
+    if (READ_ONLY) return send(res, 403, 'started with --read-only');
+    if (!sameOrigin(req)) return send(res, 403, 'same-origin requests only');
+    try {
+      const r = approve(await readBody(req));
+      tick();
+      return send(res, 200, JSON.stringify({ ok: true, approved: r }), 'application/json');
+    } catch (e) { return send(res, 400, String(e.message || e)); }
+  }
+  if (req.method !== 'GET') return send(res, 405, 'GET only (and POST /api/approve)');
   try {
     if (u.pathname === '/' || u.pathname === '/index.html') return send(res, 200, fs.readFileSync(path.join(HERE, 'index.html')), MIME['.html']);
     if (u.pathname === '/api/state') return send(res, 200, JSON.stringify(snapshot()), 'application/json');

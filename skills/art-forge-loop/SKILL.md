@@ -121,6 +121,7 @@ python <skill>/scripts/forge_loop.py work/forge/<job> status
    "ember_lord|frog": {"path": ".../r4-s4041.png", "score": 9.2, "round": 4,
                        "note": "one specific fix", "denoise": 0.45, "final": false}
    ```
+   - Skip targets in `approvals.json`: the owner already called them good enough (see 2b).
    - `round` is the newest round you judged. It must be set, or the target never advances.
    - `path` is the best image so far. If every new candidate is worse, keep the old path.
    - Set `final: true` when the score reaches the bar, or when round `max_rounds` has been judged. In that case keep the best.
@@ -128,7 +129,9 @@ python <skill>/scripts/forge_loop.py work/forge/<job> status
 5. **Repeat** until `status` prints `ALL FINAL`.
 
 ## 2b. Live dashboard (watch the forge)
-`node <skill>/dashboard/server.mjs` from the project root serves http://127.0.0.1:5390: what is generating now, ComfyUI's queue, the newest candidates with scores and picks, and a contact sheet per job against its bar. It also scans every git worktree's `work/forge/`, shows who holds the GPU lock, and is read-only. Offer it when the user wants to watch a run, and start it in the background. Options and the files it reads are in `dashboard/README.md`.
+`node <skill>/dashboard/server.mjs` from the project root serves http://127.0.0.1:5390: what is generating now, ComfyUI's queue, the newest candidates with scores and picks, and a contact sheet per job against its bar. It also scans every git worktree's `work/forge/` and shows who holds the GPU lock. Offer it when the user wants to watch a run, and start it in the background. Options and the files it reads are in `dashboard/README.md`.
+
+**The owner can end a target early.** Hovering a candidate shows **✓ good enough**; clicking it writes `<job>/approvals.json`. An approved target is final with that image, whatever you scored it: `gen` skips it, `sheets` drops it, `status` counts it as final and `report` lists it as approved. Never undo, overrule or re-judge an approval, and never delete `approvals.json`. If you want to say something about an approved piece, say it to the user. `--read-only` hides the button.
 - To show every candidate's score, not only the pick's, also write `<job>/scores.json` while judging: `{"<target>": {"r1-s1007": 8.9, "r1-s1024": 9.1}}`.
 
 ## 3. Grading (the part that matters)

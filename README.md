@@ -32,8 +32,13 @@ The trick that makes it controllable: **start from something rough** (a Blender 
 - *"Here's a screenshot of my blocky Blender model. Paint it as a polished stylised creature, keep the pose."*
 - *"Make 12 item icons in the same style as these two, one at a time, until each scores 9.5."*
 - *"Fix only the hands in this image"* (draw a mask over the bad spot; only that area is repainted).
+- *"Start the forge dashboard so I can watch the run."*
 
 About a minute per 1024 px image on 6 GB, two seeds per round, two to four rounds per piece. Runs unattended. SVG export included.
+
+**Watch it live, and call it yourself.** A zero-install dashboard shows what's generating, the queue, every candidate with its score, and a contact sheet per job against the bar. Happy with one before it reaches the bar? Hover it and click **✓ good enough**: that piece is done, and the loop stops spending rounds on it.
+
+<p align="center"><img src="docs/showcase/forge_dashboard.webp" alt="The Art Forge dashboard: a contact sheet of a queen bee boss in four views, each candidate scored against a 9.0 bar, one target approved by the owner with a good-enough button" width="100%"></p>
 
 ---
 

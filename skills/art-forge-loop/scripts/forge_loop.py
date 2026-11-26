@@ -8,6 +8,8 @@
 
 JOB_DIR/job.json (written by the agent, see SKILL.md) defines targets and settings.
 JOB_DIR/picks.json holds the verdicts (also written by the agent after judging).
+JOB_DIR/approvals.json holds the owner's "good enough" marks (written by the dashboard). An approved target is final:
+its approved image is the pick and it gets no more rounds, whatever its score.
 Outputs go to JOB_DIR/out/<target>/r<N>-s<seed>.png and JOB_DIR/sheets/.
 Paths in job.json and picks.json are relative to the directory you run from (the project root).
 """
@@ -50,7 +52,30 @@ def load(job):
     cfg.update(user)
     pp = os.path.join(job, 'picks.json')
     picks = json.load(open(pp, encoding='utf-8')) if os.path.exists(pp) else {}
-    return cfg, picks
+    return cfg, apply_approvals(job, picks)
+
+
+def approvals(job):
+    """{target: {"path": ..., "at": ...}} from JOB_DIR/approvals.json (the owner's "good enough" marks)."""
+    ap = os.path.join(job, 'approvals.json')
+    try:
+        data = json.load(open(ap, encoding='utf-8')) if os.path.exists(ap) else {}
+    except (OSError, ValueError):
+        return {}  # half-written by the dashboard: read it again next time
+    return {k: v for k, v in data.items() if isinstance(v, dict) and v.get('path')}
+
+
+def apply_approvals(job, picks):
+    """An approved target is final, with the approved image as its pick, whatever the judge scored."""
+    picks = dict(picks)
+    for key, a in approvals(job).items():
+        pk = dict(picks.get(key) or {})
+        m = re.search(r'r(\d+)-s\d+', os.path.basename(a['path']))
+        pk.update(path=a['path'], final=True, approved=True,
+                  round=max(int(pk.get('round', 0) or 0), int(m.group(1)) if m else 0))
+        pk.setdefault('note', 'approved by the owner')
+        picks[key] = pk
+    return picks
 
 
 def slug(key):
@@ -354,6 +379,9 @@ def cmd_gen(job):
     todo = plan(cfg, job, picks)
     print(f'{len(todo)} targets this round', flush=True)
     for key, rnd, init, dn, note in todo:
+        if key in approvals(job):  # marked good enough while this round was running
+            print(f'skip {key}: approved by the owner', flush=True)
+            continue
         generate(cfg, job, key, rnd, init, dn, note)
 
 
@@ -438,22 +466,25 @@ def cmd_report(job, lowest=8):
     if os.path.exists(jp):
         cfg.update(json.load(open(jp, encoding='utf-8')))
     pp = os.path.join(job, 'picks.json')
-    picks = json.load(open(pp, encoding='utf-8')) if os.path.exists(pp) else {}
+    picks = apply_approvals(job, json.load(open(pp, encoding='utf-8')) if os.path.exists(pp) else {})
     keys = list(cfg.get('targets') or picks)
     bar, maxr = cfg['bar'], cfg['max_rounds']
-    good = [k for k in keys if picks.get(k, {}).get('score', 0) >= bar]
+    good = [k for k in keys if picks.get(k, {}).get('score', 0) >= bar or picks.get(k, {}).get('approved')]
     capped = [k for k in keys if k not in good and picks.get(k, {}).get('final')]
     left = [k for k in keys if k not in good and k not in capped]
     unscored = [k for k in left if k not in picks]
     print(f'{len(good)} of {len(keys)} are good (>= {bar})  |  {len(left)} still working  |  {len(capped)} out of rounds below the bar')
-    sc = [picks[k]['score'] for k in keys if k in picks]
+    approved = [k for k in keys if picks.get(k, {}).get('approved')]
+    if approved:
+        print(f'{len(approved)} approved by the owner: ' + ', '.join(approved[:8]) + (' ...' if len(approved) > 8 else ''))
+    sc = [picks[k]['score'] for k in keys if 'score' in picks.get(k, {})]
     if sc:
         sc.sort()
         print(f'scores: lowest {sc[0]}, median {sc[len(sc) // 2]}, highest {sc[-1]}')
         a, b = round(bar - 0.5, 1), round(bar - 1.0, 1)
         bands = [(bar, 99, 'at bar'), (a, bar, f'{a}-{bar}'), (b, a, f'{b}-{a}'), (0, b, f'below {b}')]
         print('  ' + '  |  '.join(f'{lab}: {sum(lo <= v < hi for v in sc)}' for lo, hi, lab in bands))
-    ranked = sorted((k for k in left if k in picks), key=lambda k: picks[k]['score'])
+    ranked = sorted((k for k in left if 'score' in picks.get(k, {})), key=lambda k: picks[k]['score'])
     if ranked:
         print(f'lowest {min(lowest, len(ranked))} still working:')
         for k in ranked[:lowest]:

@@ -61,6 +61,14 @@
   .score.pass { color: var(--pass); } .score.near { color: var(--near); } .score.low { color: var(--low); } .score.none { color: var(--dim); }
   .badge { position: absolute; top: 6px; left: 6px; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 8px; background: var(--pass); color: #04140a; }
   .badge.new { background: var(--accent); color: #031018; }
+  .badge.ok { background: #ffd34d; color: #1a1200; }
+  .card.approved { outline: 2px solid #ffd34d; outline-offset: -2px; }
+  .okbtn { position: absolute; right: 6px; bottom: 44px; font: inherit; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 9px;
+           border: 1px solid #ffd34d; background: #000b; color: #ffd34d; cursor: pointer; opacity: 0; transition: opacity .12s; white-space: nowrap; }
+  .card:hover .okbtn, .okbtn:focus-visible, .card.approved .okbtn { opacity: 1; }
+  .okbtn:hover { background: #ffd34d; color: #1a1200; }
+  .okbtn[disabled] { opacity: .5; cursor: wait; }
+  .st.approved { color: #ffd34d; border-color: #ffd34d; }
   .jobs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
   .jobbtn { background: var(--panel2); border: 1px solid var(--line); color: var(--text); border-radius: 10px; padding: 6px 10px; cursor: pointer; font: inherit; font-size: 12px; text-align: left; }
   .jobbtn:hover { border-color: var(--accent); }
@@ -126,11 +134,20 @@ function lockSince(l) {
   return l.time ? `since ${l.time} (${ago(l.since)})` : ago(l.since);
 }
 
+function okButton(c, jobId) {
+  // "good enough": the loop treats this target as final with this image, whatever the judge scored
+  if (!jobId || !c.file || (S && S.readOnly)) return '';
+  return c.approved
+    ? `<button class="okbtn" data-approve="${esc(jobId)}" data-target="${esc(c.target)}" data-file="" title="Undo: let the loop keep working on this target">✓ undo</button>`
+    : `<button class="okbtn" data-approve="${esc(jobId)}" data-target="${esc(c.target)}" data-file="${esc(c.file)}" title="Mark good enough: final, no more rounds">✓ good enough</button>`;
+}
+
 function card(c, opts = {}) {
   const lab = opts.lab ?? `<div class="t">${esc(c.target)}</div><div class="s">${esc(c.jobName)} · r${c.round} · s${c.seed}</div>`;
   const fresh = Date.now() - c.mtime < 5 * 60e3;
-  return `<div class="card ${c.picked ? 'picked' : ''} ${opts.cls || ''}" data-src="${esc(c.hi || c.url)}" data-cap="${esc(opts.cap || `${c.target} · ${c.jobName} · round ${c.round} · seed ${c.seed} · score ${c.score ?? '–'} (bar ${c.bar})${c.picked ? ' · PICKED' : ''}`)}">
-    ${c.picked ? '<span class="badge">PICK</span>' : fresh ? '<span class="badge new">NEW</span>' : ''}
+  return `<div class="card ${c.picked ? 'picked' : ''} ${c.approved ? 'approved' : ''} ${opts.cls || ''}" data-src="${esc(c.hi || c.url)}" data-cap="${esc(opts.cap || `${c.target} · ${c.jobName} · round ${c.round} · seed ${c.seed} · score ${c.score ?? '–'} (bar ${c.bar})${c.approved ? ' · APPROVED BY YOU' : c.picked ? ' · PICKED' : ''}`)}">
+    ${c.approved ? '<span class="badge ok">APPROVED</span>' : c.picked ? '<span class="badge">PICK</span>' : fresh ? '<span class="badge new">NEW</span>' : ''}
+    ${opts.noScore ? '' : okButton(c, opts.jobId ?? c.job)}
     ${opts.noScore ? '' : scoreTag(c.score, c.bar)}
     <div class="im checker"><img decoding="async" src="${esc(c.url)}" alt=""></div>
     <div class="lab">${lab}</div></div>`;
@@ -219,10 +236,10 @@ async function loadSheet() {
   for (const t of j.targets) {
     const cells = [];
     if (t.ref) cells.push(card({ url: t.ref, target: t.key, jobName: j.name, round: 0, seed: 0, mtime: 0, bar: j.bar }, { cls: 'ref', noScore: true, lab: '<div class="s">ref / init</div>', cap: `${t.key} · ref / init` }));
-    for (const c of [...t.cands].reverse()) cells.push(card({ ...c, target: t.key, jobName: j.name, bar: j.bar }, { lab: `<div class="t">r${c.round} · s${c.seed}</div><div class="s">${c.picked ? 'picked' : ago(c.mtime)}</div>` }));
+    for (const c of [...t.cands].reverse()) cells.push(card({ ...c, target: t.key, jobName: j.name, bar: j.bar }, { jobId: j.id, lab: `<div class="t">r${c.round} · s${c.seed}</div><div class="s">${c.picked ? 'picked' : ago(c.mtime)}</div>` }));
     if (t.status === 'generating') cells.splice(t.ref ? 1 : 0, 0, `<div class="card" style="cursor:default"><div class="im checker"><span class="st generating">forging r${t.needsRound}…</span></div><div class="lab"><div class="s">in progress</div></div></div>`);
     h += `<div class="row"><div class="name"><div class="k">${esc(t.key)}</div>
-      <div style="margin-top:4px"><span class="st ${t.status}">${t.status}</span> ${t.pick ? scoreTag(t.pick.score, j.bar).replace('class="score', 'style="position:static" class="score') : ''}</div>
+      <div style="margin-top:4px"><span class="st ${t.approved ? 'approved' : t.status}">${t.approved ? 'approved by you' : t.status}</span> ${t.pick ? scoreTag(t.pick.score, j.bar).replace('class="score', 'style="position:static" class="score') : ''}</div>
       <div class="note">${t.pick ? `judged r${t.pick.round ?? '?'}${t.pick.note ? ' · ' + esc(t.pick.note) : ''}` : 'not judged yet'}</div></div>
       <div class="cells">${cells.join('') || '<span class="empty">no candidates</span>'}</div></div>`;
   }
@@ -240,7 +257,19 @@ function render() {
   renderNow(); renderQueue(); renderRecent(); renderJobs();
 }
 
-document.addEventListener('click', (e) => {
+document.addEventListener('click', async (e) => {
+  const ok = e.target.closest('[data-approve]');
+  if (ok) {
+    e.stopPropagation();
+    ok.disabled = true;
+    try {
+      const r = await fetch('/api/approve', { method: 'POST', headers: { 'content-type': 'application/json', 'x-forge': '1' },
+        body: JSON.stringify({ job: ok.dataset.approve, target: ok.dataset.target, file: ok.dataset.file || null }) });
+      if (!r.ok) alert('Could not save: ' + await r.text());
+    } catch (err) { alert('Could not save: ' + err); }
+    ok.disabled = false;
+    return; // the server pushes the new state over the stream
+  }
   if (e.target.closest('#oldBtn')) { showOld = !showOld; renderJobs(); return; }
   const jb = e.target.closest('[data-job]');
   if (jb) { selJob = jb.dataset.job; userPicked = true; renderJobs(); if (jb.tagName === 'TR') $('sheet').scrollIntoView({ behavior: 'smooth' }); return; }
