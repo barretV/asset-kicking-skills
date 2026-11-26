@@ -327,6 +327,9 @@ def main():
         except (OSError, ValueError):
             existing = {}
     comfy = args.comfyui or os.environ.get("COMFYUI_DIR") or existing.get("comfyui_dir")
+    if comfy:
+        # store an absolute path: the config is shared by every project, so a relative one breaks elsewhere
+        comfy = os.path.abspath(os.path.expanduser(comfy))
 
     tiers = load_tiers()
     gpus = detect_gpus()
